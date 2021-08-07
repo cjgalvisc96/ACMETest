@@ -1,3 +1,7 @@
-from django.db import models
+from djongo import models
 
-# Create your models here.
+
+class Article(models.Model):
+    _id = models.ObjectIdField()
+    user_id = models.CharField(max_length=50)
+    pin = models.IntegerField()
