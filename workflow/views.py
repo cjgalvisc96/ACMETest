@@ -20,15 +20,10 @@ class WorkflowJsonView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        file_content = file.read().decode('utf-8')
+
         try:
-            file_content = file.read().decode('utf-8')
             response = json.loads(file_content)
-        except UnicodeDecodeError as error:
-            logger.exception(f"WorkflowJsonView::post() -> {error}")
-            return Response(
-                {"error": workflow_errors.get('invalid_decode_json_file')},
-                status=status.HTTP_400_BAD_REQUEST
-            )
         except json.decoder.JSONDecodeError as error:
             logger.exception(f"WorkflowJsonView::post() -> {error}")
             return Response(
