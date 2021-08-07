@@ -1,9 +1,18 @@
-from json.decoder import JSONDecodeError
-
-
 class WorkflowExceptions(Exception):
     pass
 
 
-class InvalidWorkflowJsonFile(JSONDecodeError, Exception):
+class UserNotExists(WorkflowExceptions):
+    pass
+
+
+class InvalidUserPIN(WorkflowExceptions):
+    pass
+
+
+class AccountWithoutBalance(WorkflowExceptions):
+    pass
+
+
+class FailedTRMService(WorkflowExceptions):
     pass
