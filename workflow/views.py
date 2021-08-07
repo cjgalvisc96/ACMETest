@@ -19,9 +19,7 @@ class WorkflowJsonView(APIView):
                 {"error": workflow_errors.get('required_json_file')},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
         file_content = file.read().decode('utf-8')
-
         try:
             response = json.loads(file_content)
         except json.decoder.JSONDecodeError as error:
@@ -30,5 +28,4 @@ class WorkflowJsonView(APIView):
                 {"error": workflow_errors.get('invalid_content_json_file')},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
         return Response(response, status=status.HTTP_200_OK)
