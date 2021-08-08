@@ -1,10 +1,11 @@
 import logging
-from typing import Optional, Dict, List
+from treelib import Tree
+from typing import Optional, Dict, List, Union
 from workflow.exceptions import FailedWorkflowDBCreation
 from workflow.models import Workflow
 from workflow.error_messages import workflow_errors
 from workflow.account_services import AccountServices
-
+from workflow.constants import OPERATORS_CONVERSIONS
 logger = logging.getLogger(__name__)
 
 
@@ -41,11 +42,10 @@ class WorkFlowServices:
             By default the first element is always 'validate_account' using
             triggers params
         """
-        self.account_services.validate_account(user=self.user)
-        for step in self.steps:
-            params = self.get_params_values(params=step['params'])
-            for transition in step['transition']:
-                pass
+        #self.account_services.validate_account(user=self.user)
+        execution_workflow_tree = self.create_execution_workflow_tree()
+        logger.info(execution_workflow_tree.show(line_type="ascii-em"))
+        return
 
     def get_params_values(
         self,
@@ -79,10 +79,85 @@ class WorkFlowServices:
             return self.trigger # Is because the step is the trigger
         return filter_step[0]
 
-    def check_transition_conditions(
+    @staticmethod
+    def check_if_all_transition_conditions_are_valid(
+        *,
+        conditions: List[Dict],
+        result: Union[bool, float]
+    ) -> bool:
+        conditions_results = []
+        for condition in conditions:
+            check_condition = (
+                eval(
+                    f"{result} "
+                    f"{OPERATORS_CONVERSIONS[condition['operator']]} "
+                    f"{condition['value']}"
+                )
+            )
+            conditions_results.append(check_condition)
+
+        all_conditions_are_valid = (
+             all(
+                 condition_result is True for condition_result in
+                 conditions_results
+             )
+         )
+        return all_conditions_are_valid
+
+    def create_execution_workflow_tree(
+        self
+    ) -> Tree:
+        """
+            This method transform the "transitions"
+            in a "General Tree" using "treelib" library
+            Example:
+                Validate_account
+                ╚══ Account_balance
+                    ╠══ Deposit_200
+                    ║   ╚══ Account_balance_200
+                    ║       ╚══ Withdraw_50
+                    ║           ╚══ Account_balance_end_50
+                    ╚══ Withdraw_30
+                        ╚══ Account_balance_end_30
+        """
+        execution_workflow_tree = Tree()
+        for step in self.steps:
+            self.get_transitions(
+                root_name=step['id'],
+                execution_workflow_tree=execution_workflow_tree,
+                transitions=step['transitions']
+            )
+        return execution_workflow_tree
+
+    def get_transitions(
         self,
         *,
-        conditions: List[Dict]
+        root_name: str,
+        execution_workflow_tree: Tree,
+        transitions: List[Dict]
     ) -> None:
-        for condition in conditions:
-            pass
+        if not transitions:
+            return
+
+        if not execution_workflow_tree.get_node(root_name):
+            execution_workflow_tree.create_node(
+                tag=root_name.capitalize(),
+                identifier=root_name
+            )
+        for transition in transitions:
+            son_name = transition['target']
+            if not execution_workflow_tree.get_node(son_name):
+                execution_workflow_tree.create_node(
+                    tag=son_name.capitalize(),
+                    identifier=son_name,
+                    parent=root_name
+                )
+                target_transitions = self.found_step_by_id_in_steps_and_trigger(
+                    step_id=son_name
+                )
+                return self.get_transitions(
+                    root_name=son_name,
+                    execution_workflow_tree=execution_workflow_tree,
+                    transitions=target_transitions['transitions']
+                )
+

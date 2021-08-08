@@ -32,7 +32,7 @@ class WorkflowJsonView(APIView):
         json_file = self.parse_file_content_to_json(file_content=file_content)
         self.check_file_structure(json_file=json_file)
 
-        # self.call_services(json_file=json_file)
+        self.call_services(json_file=json_file)
         return Response(json_file, status=status.HTTP_200_OK)
 
     @staticmethod

@@ -2,7 +2,7 @@ UPLOAD_FILE_ENDPOINT = '/api/v1/upload-json/'
 FIXTURES_PATH = 'workflow/tests/fixtures/'
 TRM_SERVICE_URL = 'https://trm-colombia.vercel.app/?date={0}-{1}-{2}'
 OPERATORS_CONVERSIONS = {
-    "eq": "=",
+    "eq": "==",
     "gt": ">",
     "gte": ">=",
     "lt": "<",

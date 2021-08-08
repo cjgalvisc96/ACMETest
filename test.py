@@ -1,19 +1,7 @@
-
-
 if __name__ == '__main__':
-    steps = [
-        {
-            "id": 1
-        },
-        {
-            "id": 2
-        },
-        {
-            "id": 3
-        }
-    ]
-    steps_ids = [1, 4]
-    for step_id in steps_ids:
-        result = list(filter(lambda step: step['id'] == step_id, steps))
-        print(result)
-
+    conditions_results = [True,True,True,False]
+    result = all(
+        condition_result is True for condition_result in
+        conditions_results
+    )
+    print((result))

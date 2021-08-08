@@ -10,7 +10,12 @@
       "transitions": [
         {
           "condition": [
-            {"from_id": "validate_account", "field_id": "is_valid", "operator": "eq", "value": true}
+            {
+              "from_id": "validate_account",
+              "field_id": "is_valid",
+              "operator": "eq",
+              "value": true
+            }
           ],
           "target": "account_balance"
         }
