@@ -16,3 +16,11 @@ class AccountWithoutBalance(WorkflowExceptions):
 
 class FailedTRMService(WorkflowExceptions):
     pass
+
+
+class FailedWorkflowDBCreation(WorkflowExceptions):
+    pass
+
+
+class FailedAccountDBCreation(WorkflowExceptions):
+    pass

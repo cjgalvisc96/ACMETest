@@ -8,3 +8,4 @@ OPERATORS_CONVERSIONS = {
     "lt": "<",
     "lte": "<=",
 }
+MINIMUM_BALANCE = 0
