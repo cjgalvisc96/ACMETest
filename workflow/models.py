@@ -3,7 +3,7 @@ from djongo import models
 
 class User(models.Model):
     _id = models.ObjectIdField()
-    user_id = models.CharField(max_length=50)
+    user_id = models.CharField(max_length=200)
     pin = models.IntegerField()
 
     class Meta:
@@ -18,6 +18,7 @@ class Transaction(models.Model):
     previous_transaction_id = models.FloatField()
     next_transaction_id = models.FloatField()
     workflow_id = models.CharField(max_length=24)
+    action = models.CharField(max_length=200)
 
 
 class Account(models.Model):
@@ -37,14 +38,14 @@ class Transition(models.Model):
     condition = models.JSONField(
         [
             {
-                "from_id": models.CharField(max_length=50, null=True),
-                "field_id": models.CharField(max_length=50),
-                "operator": models.CharField(max_length=50),
+                "from_id": models.CharField(max_length=200, null=True),
+                "field_id": models.CharField(max_length=200),
+                "operator": models.CharField(max_length=200),
                 "value": [models.BooleanField(), models.FloatField()]
             }
         ]
     )
-    target = models.CharField(max_length=50)
+    target = models.CharField(max_length=200)
 
 
 class Workflow(models.Model):
@@ -52,16 +53,16 @@ class Workflow(models.Model):
     steps = models.JSONField(
         [
             {
-                "id": models.CharField(max_length=50),
+                "id": models.CharField(max_length=200),
                 "params": models.JSONField({}),
-                "action": models.CharField(max_length=50),
+                "action": models.CharField(max_length=200),
                 "transitions": models.ArrayField(model_container=Transition)
             }
         ]
     )
     trigger = models.JSONField(
         {
-            "id": models.CharField(max_length=50),
+            "id": models.CharField(max_length=200),
             "params": models.JSONField({}),
             "transitions": models.ArrayField(model_container=Transition)
         }

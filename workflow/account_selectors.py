@@ -7,7 +7,7 @@ def get_account_by_user_id(
     user_id: str
 ) -> Optional[Account]:
     try:
-        return Account.objects.filter(
+        return Account.objects.get(
             user__user_id=user_id
         )
     except Account.DoesNotExist:
@@ -20,7 +20,7 @@ def get_account_by_user_id_and_pin(
     pin: int
 ) -> Optional[Account]:
     try:
-        return Account.objects.filter(
+        return Account.objects.get(
             user__user_id=user_id,
             user__pin=pin
         )

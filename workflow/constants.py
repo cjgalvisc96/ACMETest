@@ -10,3 +10,9 @@ OPERATORS_CONVERSIONS = {
 }
 MINIMUM_BALANCE = 0
 ALLOWED_FILE_EXTENSIONS = ['json']
+TRANSITIONS_IDS = [
+    "validate_account",
+    "account_balance",
+    "withdraw_in_dollars",
+    ""
+]
