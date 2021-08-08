@@ -1,2 +1,6 @@
+[run]
+include=./workflow/*
+
 [report]
 show_missing=true
+include=./workflow/*
