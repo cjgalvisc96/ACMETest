@@ -9,3 +9,4 @@ OPERATORS_CONVERSIONS = {
     "lte": "<=",
 }
 MINIMUM_BALANCE = 0
+ALLOWED_FILE_EXTENSIONS = ['json']

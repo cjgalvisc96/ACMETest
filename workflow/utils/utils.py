@@ -20,3 +20,10 @@ def get_current_trm() -> Union[float, FailedTRMService]:
         return trm
     except FailedTRMService as error:
         logging.error(f"get_current_trm() -> {error}")
+
+
+def get_file_extension(
+    file_name: str
+) -> str:
+    split_file_name = file_name.split('.')
+    return split_file_name[-1]

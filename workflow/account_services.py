@@ -1,6 +1,6 @@
 import logging
 from typing import Union, List, Dict, Optional
-from workflow.utils.get_current_trm import get_current_trm
+from workflow.utils import utils as workflow_utils
 from workflow.exceptions import (
     AccountWithoutBalance,
     InvalidUserPIN,
@@ -127,7 +127,7 @@ class AccountServices:
             pin=pin
         )
         current_balance = account.balance
-        current_trm = get_current_trm()
+        current_trm = workflow_utils.get_current_trm()
         new_balance = current_balance - (amount_to_withdraw * current_trm)
         if new_balance < MINIMUM_BALANCE:
             currency = "USD"

@@ -1,5 +1,11 @@
 workflow_errors = {
     "required_json_file": "The Workflow json file is required",
+    "invalid_file_extension": (
+        "The extension file is invalid, only 'json' extension is allow"
+    ),
+    "invalid_structure_json_file": (
+        "The Workflow structure json file is invalid",
+    ),
     "invalid_content_json_file": "The Workflow content json file is invalid",
     "db_creation": (
         "An error occurred while trying to create the Workflow in the db "
