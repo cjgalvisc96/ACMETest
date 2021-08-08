@@ -67,16 +67,19 @@ class WorkFlowServices:
         
         return params_results
 
-    def found_step_by_id_in_steps_and_trigger(
+    def found_step(
         self,
         *,
         step_id: str
     ) -> Dict:
+        """
+            This method return the step find by "id" in 'steps' and 'trigger'
+        """
         filter_step = list(filter(
             lambda step: step['id'] == step_id, self.steps
         ))
         if not filter_step:
-            return self.trigger # Is because the step is the trigger
+            return self.trigger  # Because the step is the trigger
         return filter_step[0]
 
     @staticmethod
@@ -122,42 +125,43 @@ class WorkFlowServices:
         """
         execution_workflow_tree = Tree()
         for step in self.steps:
-            self.get_transitions(
-                root_name=step['id'],
+            self.get_recursive_transitions(
+                parent_node_name=step['id'],
                 execution_workflow_tree=execution_workflow_tree,
-                transitions=step['transitions']
+                step_transitions=step['transitions']
             )
         return execution_workflow_tree
 
-    def get_transitions(
+    def get_recursive_transitions(
         self,
         *,
-        root_name: str,
+        parent_node_name: str,
         execution_workflow_tree: Tree,
-        transitions: List[Dict]
+        step_transitions: List[Dict]
     ) -> None:
-        if not transitions:
+        """
+            This is a RECURSIVE method for get all nested transitions
+        """
+        if not step_transitions:
             return
 
-        if not execution_workflow_tree.get_node(root_name):
+        if not execution_workflow_tree.get_node(parent_node_name):
             execution_workflow_tree.create_node(
-                tag=root_name.capitalize(),
-                identifier=root_name
+                tag=parent_node_name.capitalize(),
+                identifier=parent_node_name
             )
-        for transition in transitions:
-            son_name = transition['target']
-            if not execution_workflow_tree.get_node(son_name):
+        for step_transition in step_transitions:
+            son_node_name = step_transition['target']
+            if not execution_workflow_tree.get_node(son_node_name):
                 execution_workflow_tree.create_node(
-                    tag=son_name.capitalize(),
-                    identifier=son_name,
-                    parent=root_name
+                    tag=son_node_name.capitalize(),
+                    identifier=son_node_name,
+                    parent=parent_node_name
                 )
-                target_transitions = self.found_step_by_id_in_steps_and_trigger(
-                    step_id=son_name
-                )
-                return self.get_transitions(
-                    root_name=son_name,
+                target_transitions = self.found_step(step_id=son_node_name)
+                return self.get_recursive_transitions(
+                    parent_node_name=son_node_name,
                     execution_workflow_tree=execution_workflow_tree,
-                    transitions=target_transitions['transitions']
+                    step_transitions=target_transitions['transitions']
                 )
 
