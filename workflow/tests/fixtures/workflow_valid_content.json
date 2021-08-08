@@ -19,7 +19,9 @@
     {
       "id": "account_balance",
       "params": {
-        "user_id": {"from_id": "start", "param_id": "user_id"}
+        "user_id": {
+          "from_id": "start", "param_id": "user_id"
+        }
       },
       "action": "get_account_balance",
       "transitions": [

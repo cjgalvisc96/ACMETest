@@ -12,7 +12,8 @@ MINIMUM_BALANCE = 0
 ALLOWED_FILE_EXTENSIONS = ['json']
 TRANSITIONS_IDS = [
     "validate_account",
-    "account_balance",
+    "get_account_balance",
+    "deposit_money"
     "withdraw_in_dollars",
-    ""
+    "withdraw_in_pesos",
 ]

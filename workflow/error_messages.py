@@ -17,5 +17,7 @@ account_errors = {
     "invalid_pin": "The pin {0} is invalid for user with id {0}",
     "account_without_balance": (
         "If you withdraw {0} {1} from the account this don't will have balance"
-    )
+    ),
+    "db_creation": "Account can't create in DB",
+    "db_update": "Account can't update in DB"
 }

@@ -31,6 +31,10 @@ class FailedAccountDBCreation(WorkflowExceptions):
     pass
 
 
+class FailedAccountDBUpdate(WorkflowExceptions):
+    pass
+
+
 class FileNotExist(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = workflow_errors.get('required_json_file')
