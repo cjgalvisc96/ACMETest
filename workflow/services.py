@@ -6,8 +6,26 @@ from workflow.exceptions import (
     InvalidUserPIN,
     UserNotExists
 )
+from workflow.models import Workflow
 
 logger = logging.getLogger(__name__)
+
+
+class WorkFlow:
+    def __init__(self, json_file):
+        self.json_file = json_file
+        self.steps = ''
+        self.triggers = ''
+
+    def create_workflow_in_db(self):
+        Workflow.objects.create(
+            steps=self.json_file['steps'],
+            trigger=self.json_file['trigger']
+        )
+
+
+    def execute_workflow(self):
+        pass
 
 
 class Account:
