@@ -12,19 +12,22 @@ class User(models.Model):
 
 class Transaction(models.Model):
     _id = models.ObjectIdField()
-    transaction_id = models.CharField(max_length=50)
     date = models.DateTimeField()
     old_balance = models.FloatField()
     balance_after_transaction = models.FloatField()
     previous_transaction_id = models.FloatField()
     next_transaction_id = models.FloatField()
+    workflow_id = models.CharField(max_length=24)
 
 
 class Account(models.Model):
     _id = models.ObjectIdField()
-    account_id = models.CharField(max_length=50)
     balance = models.FloatField()
-    workflow_id = models.CharField(max_length=24)
+    workflows_ids = models.JSONField(
+        [
+            models.CharField(max_length=24)
+        ]
+    )
     user = models.EmbeddedField(model_container=User)
     transactions = models.ArrayField(model_container=Transaction)
 
@@ -58,8 +61,8 @@ class Workflow(models.Model):
     )
     trigger = models.JSONField(
         {
+            "id": models.CharField(max_length=50),
             "params": models.JSONField({}),
-            "transitions": models.ArrayField(model_container=Transition),
-            "id": models.CharField(max_length=50)
+            "transitions": models.ArrayField(model_container=Transition)
         }
     )
