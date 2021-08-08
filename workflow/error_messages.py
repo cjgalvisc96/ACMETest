@@ -4,7 +4,7 @@ workflow_errors = {
         "The extension file is invalid, only 'json' extension is allow"
     ),
     "invalid_structure_json_file": (
-        "The Workflow structure json file is invalid",
+        "The Workflow structure json file is invalid"
     ),
     "invalid_content_json_file": "The Workflow content json file is invalid",
     "db_creation": (

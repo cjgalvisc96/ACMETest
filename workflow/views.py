@@ -85,11 +85,10 @@ class WorkflowJsonView(APIView):
     ) -> Optional[InvalidFileExtension]:
         file_extension = workflow_utils.get_file_extension(file_name=file_name)
         if file_extension not in ALLOWED_FILE_EXTENSIONS:
-            msg = (
+            logger.error(
                 f"WorkflowJsonView::check_file_extension() -> "
                 f"{workflow_errors.get('invalid_file_extension')}"
             )
-            logger.error(msg)
             raise InvalidFileExtension()
         return None
 
@@ -99,10 +98,9 @@ class WorkflowJsonView(APIView):
         file: MultiPartParser
     ) -> Optional[FileNotExist]:
         if not file:
-            msg = (
+            logger.error(
                 f"WorkflowJsonView::check_file_existence() -> "
                 f"{workflow_errors.get('required_json_file')}"
             )
-            logger.error(msg)
             raise FileNotExist()
         return None
