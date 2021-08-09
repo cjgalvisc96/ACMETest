@@ -7,8 +7,6 @@ def get_workflow_by_id(
     workflow_id: str
 ) -> Optional[Workflow]:
     try:
-        return Workflow.objects.get(
-            _id=workflow_id
-        )
+        return Workflow.objects.get(_id=workflow_id)
     except Workflow.DoesNotExist:
         return None

@@ -27,10 +27,6 @@ class FailedWorkflowDBCreation(WorkflowExceptions):
     pass
 
 
-class FailedAccountDBCreation(WorkflowExceptions):
-    pass
-
-
 class FailedAccountDBUpdate(WorkflowExceptions):
     pass
 

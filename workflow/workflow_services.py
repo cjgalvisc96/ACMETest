@@ -53,12 +53,14 @@ class WorkFlowServices:
             if action == "validate_account":
                 user_filter['pin'] = step_params['pin']
                 self.account_services.validate_account(user_filter=user_filter)
+                # TODO: Check transition conditions
                 continue
 
             if action == "get_account_balance":
                 self.account_services.get_account_balance(
                     user_filter=user_filter
                 )
+                # TODO: Check transition conditions
                 continue
 
             if action == "deposit_money":
@@ -67,6 +69,7 @@ class WorkFlowServices:
                     user_filter=user_filter,
                     amount_to_deposit=step_params['money']
                 )
+                # TODO: Check transition conditions
                 continue
 
             if action == "withdraw_in_dollars":
@@ -74,6 +77,7 @@ class WorkFlowServices:
                     user_filter=user_filter,
                     amount_to_withdraw=step_params['money']
                 )
+                # TODO: Check transition conditions
                 continue
 
             if action == "withdraw_in_pesos":
@@ -81,6 +85,7 @@ class WorkFlowServices:
                     user_filter=user_filter,
                     amount_to_withdraw=step_params['money']
                 )
+                # TODO: Check transition conditions
                 continue
         return
 

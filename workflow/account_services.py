@@ -5,7 +5,6 @@ from workflow.exceptions import (
     AccountWithoutBalance,
     InvalidUserPIN,
     UserNotExists,
-    FailedAccountDBCreation,
     FailedAccountDBUpdate
 )
 from workflow.constants import MINIMUM_BALANCE
@@ -130,7 +129,7 @@ class AccountServices:
         *,
         user_filter: Dict,
         transaction: Dict,
-    ) -> Optional[FailedAccountDBCreation]:
+    ) -> Optional[FailedAccountDBUpdate]:
         try:
             account = account_selectors.filter_account_by_user(
                     user_filter=user_filter

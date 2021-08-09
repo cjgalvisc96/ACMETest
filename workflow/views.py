@@ -9,6 +9,7 @@ from workflow.constants import ALLOWED_FILE_EXTENSIONS
 from workflow.error_messages import workflow_errors
 from workflow.workflow_services import WorkFlowServices
 from workflow.serializers import WorkflowSerializer
+from workflow.success_messages import workflow_success_messages
 from workflow.exceptions import (
     FileNotExist,
     InvalidFileExtension,
@@ -33,18 +34,23 @@ class WorkflowJsonView(APIView):
         json_file = self.parse_file_content_to_json(file_content=file_content)
         self.check_file_structure(json_file=json_file)
 
-        self.call_services(json_file=json_file)
-        return Response(json_file, status=status.HTTP_200_OK)
+        self.execute_workflow(json_file=json_file)
+        return Response(
+            {
+                "success": workflow_success_messages['success_workflow_execution']
+            },
+            status=status.HTTP_200_OK
+        )
 
     @staticmethod
-    def call_services(
+    def execute_workflow(
         json_file
     ) -> Optional[Response]:
         try:
             workflow = WorkFlowServices(json_file=json_file)
             workflow.execute_workflow()
         except Exception as error:
-            logger.exception(f"WorkflowJsonView::call_services() -> {error}")
+            logger.exception(f"WorkflowJsonView::execute_workflow() -> {error}")
             raise InvalidWorkflowExecution()
         return None
 

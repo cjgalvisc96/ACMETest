@@ -22,6 +22,5 @@ account_errors = {
         "If you withdraw {0} {1} ({2} COP) from the "
         "account this don't will have balance"
     ),
-    "db_creation": "Account can't create in DB",
     "db_update": "Account can't update in DB"
 }
