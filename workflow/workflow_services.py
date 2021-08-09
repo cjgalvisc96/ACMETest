@@ -1,14 +1,15 @@
 import logging
 from treelib import Tree
-from typing import Optional, Dict, List, Union
+from typing import Dict, List, Union
 from workflow.exceptions import FailedWorkflowDBCreation
 from workflow.models import Workflow
 from workflow.error_messages import workflow_errors
 from workflow.account_services import AccountServices
 from workflow.constants import (
     OPERATORS_CONVERSIONS,
-    TRANSITIONS_IDS
+    CONSOLE_YELLOW_COLOR
 )
+
 logger = logging.getLogger(__name__)
 
 
@@ -38,9 +39,8 @@ class WorkFlowServices:
 
     def execute_workflow(self):
         execution_workflow_tree = self.create_execution_workflow_tree()
-        logger.info(
-            execution_workflow_tree.show(line_type="ascii-em")  # print Tree
-        )
+        print(f"{CONSOLE_YELLOW_COLOR}EXECUTION WORKFLOW TREE")
+        execution_workflow_tree.show(line_type='ascii-em')  # Print Tree
         # The tree is traversed using the "DEPTH" technique
         for node in execution_workflow_tree.expand_tree(sorting=True):
             current_node = execution_workflow_tree.get_node(nid=node)
@@ -56,28 +56,28 @@ class WorkFlowServices:
                 continue
 
             if action == "get_account_balance":
-                current_balance = self.account_services.get_account_balance(
+                self.account_services.get_account_balance(
                     user_filter=user_filter
                 )
                 continue
 
             if action == "deposit_money":
                 user_filter = {'user_id': step_params['user_id']}
-                new_balance = self.account_services.deposit_money(
+                self.account_services.deposit_money(
                     user_filter=user_filter,
                     amount_to_deposit=step_params['money']
                 )
                 continue
 
             if action == "withdraw_in_dollars":
-                new_balance = self.account_services.withdraw_in_dollars(
+                self.account_services.withdraw_in_dollars(
                     user_filter=user_filter,
                     amount_to_withdraw=step_params['money']
                 )
                 continue
 
             if action == "withdraw_in_pesos":
-                new_balance = self.account_services.withdraw_in_dollars(
+                self.account_services.withdraw_in_dollars(
                     user_filter=user_filter,
                     amount_to_withdraw=step_params['money']
                 )
@@ -118,31 +118,6 @@ class WorkFlowServices:
         if not filter_step:
             return self.trigger  # Because the step is the trigger
         return filter_step[0]
-
-    @staticmethod
-    def check_if_all_transition_conditions_are_valid(
-        *,
-        conditions: List[Dict],
-        result: Union[bool, float]
-    ) -> bool:
-        conditions_results = []
-        for condition in conditions:
-            check_condition = (
-                eval(
-                    f"{result} "
-                    f"{OPERATORS_CONVERSIONS[condition['operator']]} "
-                    f"{condition['value']}"
-                )
-            )
-            conditions_results.append(check_condition)
-
-        all_conditions_are_valid = (
-             all(
-                 condition_result is True for condition_result in
-                 conditions_results
-             )
-         )
-        return all_conditions_are_valid
 
     def create_execution_workflow_tree(
         self
@@ -202,3 +177,27 @@ class WorkFlowServices:
                     step_transitions=target_transitions['transitions']
                 )
 
+    @staticmethod
+    def check_if_all_transition_conditions_are_valid(
+        *,
+        conditions: List[Dict],
+        result: Union[bool, float]
+    ) -> bool:
+        conditions_results = []
+        for condition in conditions:
+            check_condition = (
+                eval(
+                    f"{result} "
+                    f"{OPERATORS_CONVERSIONS[condition['operator']]} "
+                    f"{condition['value']}"
+                )
+            )
+            conditions_results.append(check_condition)
+
+        all_conditions_are_valid = (
+             all(
+                 condition_result is True for condition_result in
+                 conditions_results
+             )
+         )
+        return all_conditions_are_valid
