@@ -1,30 +1,11 @@
-from typing import Optional
+from typing import Optional, Dict
 from workflow.models import Account
 
 
-def get_account_by_user_id(
+def filter_account_by_user(
     *,
-    user_id: str
+    user_filter: Dict
 ) -> Optional[Account]:
-    try:
-        return Account.objects.get(
-            user__user_id=user_id
-        )
-    except Account.DoesNotExist:
-        return None
-
-
-def get_account_by_user_id_and_pin_and_workflow_id(
-    *,
-    user_id: str,
-    pin: int,
-    workflow_id: str
-) -> Optional[Account]:
-    try:
-        return Account.objects.get(
-            user__user_id=user_id,
-            user__pin=pin,
-            workflow_id__contains=workflow_id
-        )
-    except Account.DoesNotExist:
-        return None
+    return Account.objects.filter(
+        user=user_filter
+    )

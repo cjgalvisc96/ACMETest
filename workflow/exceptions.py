@@ -53,3 +53,8 @@ class InvalidFileStructure(APIException):
 class InvalidFileContent(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = workflow_errors.get('invalid_content_json_file')
+
+
+class InvalidWorkflowExecution(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = workflow_errors.get('invalid_workflow_execution')

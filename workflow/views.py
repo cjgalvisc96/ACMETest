@@ -13,7 +13,8 @@ from workflow.exceptions import (
     FileNotExist,
     InvalidFileExtension,
     InvalidFileStructure,
-    InvalidFileContent
+    InvalidFileContent,
+    InvalidWorkflowExecution
 )
 from workflow.utils import utils as workflow_utils
 
@@ -43,11 +44,8 @@ class WorkflowJsonView(APIView):
             workflow = WorkFlowServices(json_file=json_file)
             workflow.execute_workflow()
         except Exception as error:
-            logger.exception(f"WorkflowJsonView::post() -> {error}")
-            return Response(
-                {"error": error},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            logger.exception(f"WorkflowJsonView::call_services() -> {error}")
+            raise InvalidWorkflowExecution()
         return None
 
     @staticmethod

@@ -6,9 +6,6 @@ class User(models.Model):
     user_id = models.CharField(max_length=200)
     pin = models.IntegerField()
 
-    class Meta:
-        abstract = True
-
 
 class Transaction(models.Model):
     _id = models.ObjectIdField()

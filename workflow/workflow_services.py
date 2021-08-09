@@ -5,7 +5,10 @@ from workflow.exceptions import FailedWorkflowDBCreation
 from workflow.models import Workflow
 from workflow.error_messages import workflow_errors
 from workflow.account_services import AccountServices
-from workflow.constants import OPERATORS_CONVERSIONS
+from workflow.constants import (
+    OPERATORS_CONVERSIONS,
+    TRANSITIONS_IDS
+)
 logger = logging.getLogger(__name__)
 
 
@@ -15,18 +18,14 @@ class WorkFlowServices:
         self.steps = self.json_file['steps']
         self.trigger = self.json_file['trigger']
         self.total_steps = len(self.json_file['steps'])
-        self.user = {
-            "user_id": self.trigger['params']['user_id'],
-            "pin": self.trigger['params']['pin']
-        }
-        self.create_workflow_in_db()
+        self.workflow_id = self.create_workflow_in_db()
         self.account_services = AccountServices()
 
     def create_workflow_in_db(
         self
-    ) -> Optional[FailedWorkflowDBCreation]:
+    ) -> Union[str, FailedWorkflowDBCreation]:
         try:
-            Workflow.objects.create(
+            workflow = Workflow.objects.create(
                 steps=self.json_file['steps'],
                 trigger=self.json_file['trigger']
             )
@@ -35,30 +34,68 @@ class WorkFlowServices:
                 f"WorkFlowServices::create_workflow_in_db() -> {error}"
             )
             raise FailedWorkflowDBCreation(workflow_errors['db_creation'])
-        return None
+        return str(workflow._id)
 
     def execute_workflow(self):
-        """
-            By default the first element is always 'validate_account' using
-            triggers params
-        """
-        #self.account_services.validate_account(user=self.user)
         execution_workflow_tree = self.create_execution_workflow_tree()
-        logger.info(execution_workflow_tree.show(line_type="ascii-em"))
+        logger.info(
+            execution_workflow_tree.show(line_type="ascii-em")  # print Tree
+        )
+        # The tree is traversed using the "DEPTH" technique
+        for node in execution_workflow_tree.expand_tree(sorting=True):
+            current_node = execution_workflow_tree.get_node(nid=node)
+            step_to_execute = self.found_step(step_id=current_node.identifier)
+            action = step_to_execute['action']
+            step_params = self.get_step_params_values(
+                step_params=step_to_execute['params']
+            )
+            user_filter = {'user_id': step_params['user_id']}
+            if action == "validate_account":
+                user_filter['pin'] = step_params['pin']
+                self.account_services.validate_account(user_filter=user_filter)
+                continue
+
+            if action == "get_account_balance":
+                current_balance = self.account_services.get_account_balance(
+                    user_filter=user_filter
+                )
+                continue
+
+            if action == "deposit_money":
+                user_filter = {'user_id': step_params['user_id']}
+                new_balance = self.account_services.deposit_money(
+                    user_filter=user_filter,
+                    amount_to_deposit=step_params['money']
+                )
+                continue
+
+            if action == "withdraw_in_dollars":
+                new_balance = self.account_services.withdraw_in_dollars(
+                    user_filter=user_filter,
+                    amount_to_withdraw=step_params['money']
+                )
+                continue
+
+            if action == "withdraw_in_pesos":
+                new_balance = self.account_services.withdraw_in_dollars(
+                    user_filter=user_filter,
+                    amount_to_withdraw=step_params['money']
+                )
+                continue
         return
 
-    def get_params_values(
+    def get_step_params_values(
         self,
         *,
-        params: Dict
+        step_params: Dict
     ) -> Dict:
         params_results = {}
-        for param_key, param_values in params.items():
+        for param_key, param_values in step_params.items():
             if not param_values['from_id']:
                 params_results[param_key] = param_values['value']
             else:
                 # For params with step reference
-                reference_step = self.found_step_by_id_in_steps_and_trigger(
+                reference_step = self.found_step(
                     step_id=param_values['from_id']
                 )
                 params_results[param_key] = (

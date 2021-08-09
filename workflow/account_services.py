@@ -21,22 +21,23 @@ class AccountServices:
     @staticmethod
     def validate_account(
         *,
-        user: Dict
+        user_filter: Dict
     ) -> Union[bool, UserNotExists, InvalidUserPIN]:
-        user_id = user['user_id']
-        pin = user['pin']
-        account_by_user_id = account_selectors.get_account_by_user_id(
-            user_id=user_id
+        account_qry = account_selectors.filter_account_by_user(
+            user_filter=user_filter
         )
-        if not account_by_user_id:
-            msg = account_errors['user_not_exists'].format(user_id)
+        if not account_qry.exists():
+            msg = account_errors['user_not_exists'].format(user_filter['user_id'])
             logger.exception(f"AccountServices::validate_account() -> {msg}")
             raise UserNotExists(msg)
 
-        is_valid_pin = True if account_by_user_id.user.pin == pin else False
+        account = account_qry.first()
+        is_valid_pin = True if account.user['pin'] == user_filter['pin'] else False
 
         if not is_valid_pin:
-            msg = account_errors['invalid_pin'].format(pin, user_id)
+            msg = account_errors['invalid_pin'].format(
+                user_filter['pin'], user_filter['user_id']
+            )
             logger.exception(f"AccountServices::validate_account() -> {msg}")
             raise InvalidUserPIN(msg)
 
@@ -45,47 +46,40 @@ class AccountServices:
     @staticmethod
     def get_account_balance(
         *,
-        user: Dict,
-        workflow_id: str
+        user_filter: Dict
     ) -> Union[float, AccountWithoutBalance]:
-        account = account_selectors. \
-            get_account_by_user_id_and_pin_and_workflow_id(
-                user_id=user['user_id'],
-                pin=user['pin'],
-                workflow_id=workflow_id
-            )
-        return account.balance
+        account_qry = account_selectors.filter_account_by_user(
+            user_filter=user_filter
+        )
+        account = account_qry.first()
+        current_balance = account.balance
+        return current_balance
 
     @staticmethod
     def deposit_money(
         *,
-        amount_to_deposit: float,
-        user: Dict,
-        workflow_id: str
-    ) -> Union[float, AccountWithoutBalance]:
-        account = account_selectors. \
-            get_account_by_user_id_and_pin_and_workflow_id(
-                user_id=user['user_id'],
-                pin=user['pin'],
-                workflow_id=workflow_id
-            )
+        user_filter: Dict,
+        amount_to_deposit: float
+    ) -> float:
+        account_qry = account_selectors.filter_account_by_user(
+            user_filter=user_filter
+        )
+        account = account_qry.first()
         account.balance += amount_to_deposit
         account.save()
-        return account.balance
+        new_balance = account.balance
+        return new_balance
 
     @staticmethod
     def withdraw_in_pesos(
         *,
-        amount_to_withdraw: float,
-        user: Dict,
-        workflow_id: str
+        user_filter: Dict,
+        amount_to_withdraw: float
     ) -> Union[float, AccountWithoutBalance]:
-        account = account_selectors. \
-            get_account_by_user_id_and_pin_and_workflow_id(
-                user_id=user['user_id'],
-                pin=user['pin'],
-                workflow_id=workflow_id
-            )
+        account_qry = account_selectors.filter_account_by_user(
+            user_filter=user_filter
+        )
+        account = account_qry.first()
         current_balance = account.balance
         new_balance = current_balance - amount_to_withdraw
         if new_balance < MINIMUM_BALANCE:
@@ -104,23 +98,21 @@ class AccountServices:
     @staticmethod
     def withdraw_in_dollars(
         *,
-        amount_to_withdraw: float,
-        user: Dict,
-        workflow_id: str
+        user_filter: Dict,
+        amount_to_withdraw: float
     ) -> Union[float, AccountWithoutBalance]:
-        account = account_selectors. \
-            get_account_by_user_id_and_pin_and_workflow_id(
-                user_id=user['user_id'],
-                pin=user['pin'],
-                workflow_id=workflow_id
-            )
+        account_qry = account_selectors.filter_account_by_user(
+            user_filter=user_filter
+        )
+        account = account_qry.first()
         current_balance = account.balance
         current_trm = workflow_utils.get_current_trm()
-        new_balance = current_balance - (amount_to_withdraw * current_trm)
+        amount_dollars_to_pesos = amount_to_withdraw * current_trm
+        new_balance = current_balance - amount_dollars_to_pesos
         if new_balance < MINIMUM_BALANCE:
             currency = "USD"
             msg = account_errors['account_without_balance'].format(
-                amount_to_withdraw, currency
+                amount_to_withdraw, currency, amount_dollars_to_pesos
             )
             logger.error(
                 f"AccountServices::withdraw_in_dollars() -> {msg}"
