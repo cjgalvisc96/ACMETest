@@ -44,7 +44,8 @@ class WorkflowJsonView(APIView):
 
     @staticmethod
     def execute_workflow(
-        json_file
+        *,
+        json_file: Dict
     ) -> Optional[Response]:
         try:
             workflow = WorkFlowServices(json_file=json_file)
