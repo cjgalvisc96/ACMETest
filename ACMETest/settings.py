@@ -78,7 +78,9 @@ WSGI_APPLICATION = 'ACMETest.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'workflow'
+        'CLIENT': {
+            'host': 'mongodb://mongodb:27017/workflow'
+        }
     }
 }
 

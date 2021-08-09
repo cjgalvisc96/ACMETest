@@ -18,7 +18,6 @@ class WorkFlowServices:
         self.json_file = json_file
         self.steps = self.json_file['steps']
         self.trigger = self.json_file['trigger']
-        self.total_steps = len(self.json_file['steps'])
         self.workflow_id = self.create_workflow_in_db()
         self.account_services = AccountServices()
 
@@ -37,7 +36,7 @@ class WorkFlowServices:
             raise FailedWorkflowDBCreation(workflow_errors['db_creation'])
         return str(workflow._id)
 
-    def execute_workflow(self):
+    def execute_workflow(self) -> None:
         execution_workflow_tree = self.create_execution_workflow_tree()
         print(f"{CONSOLE_YELLOW_COLOR}EXECUTION WORKFLOW TREE")
         execution_workflow_tree.show(line_type='ascii-em')  # Print Tree
@@ -87,7 +86,6 @@ class WorkFlowServices:
                 )
                 # TODO: Check transition conditions
                 continue
-        return
 
     def get_step_params_values(
         self,

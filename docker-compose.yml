@@ -1,0 +1,45 @@
+version: "3.7"
+
+services:
+  mongodb:
+    image: mongo:4.2.7
+    restart: always
+    volumes:
+      - ./db:/data/db
+    ports:
+      - 27017:27017
+
+  web:
+    image: app
+    restart: always
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    links:
+      - mongodb
+    depends_on:
+      - migration
+
+  migration:
+    build: .
+    image: app
+    command: python manage.py migrate
+    volumes:
+      - .:/app
+    links:
+      - mongodb
+    depends_on:
+      - make_migrations
+
+  make_migrations:
+    build: .
+    image: app
+    command: python manage.py makemigrations workflow
+    volumes:
+      - .:/app
+    links:
+      - mongodb
+    depends_on:
+      - mongodb
