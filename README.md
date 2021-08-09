@@ -28,7 +28,7 @@ To solve the problem the data structure "General tree" was used
 0. Create this document in collection "workflow_account" in your database:
    ```json
     {
-        "balance" : 0.0,
+        "balance" : 90000.0,
         "workflows_ids" : [],
         "transactions" : [],
         "user" : {

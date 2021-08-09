@@ -1,7 +1,10 @@
 import logging
 from treelib import Tree
 from typing import Dict, List, Union
-from workflow.exceptions import FailedWorkflowDBCreation
+from workflow.exceptions import (
+    FailedWorkflowDBCreation,
+    FailedWorkflowExecution
+)
 from workflow.models import Workflow
 from workflow.error_messages import workflow_errors
 from workflow.account_services import AccountServices
@@ -20,6 +23,7 @@ class WorkFlowServices:
         self.trigger = self.json_file['trigger']
         self.workflow_id = self.create_workflow_in_db()
         self.account_services = AccountServices()
+        self.step_result = ''
 
     def create_workflow_in_db(
         self
@@ -49,43 +53,57 @@ class WorkFlowServices:
                 step_params=step_to_execute['params']
             )
             user_filter = {'user_id': step_params['user_id']}
+            node_parent = execution_workflow_tree.parent(
+                nid=current_node.identifier
+            )
+            if node_parent:  # Is necessary check conditions
+                transition = self.found_transition_in_step(
+                    step_id=node_parent.identifier,
+                    transition_id=step_to_execute['id']
+                )
+                all_transition_conditions_are_valid = self. \
+                    check_if_all_transition_conditions_are_valid(
+                        conditions=transition['condition'],
+                        result=self.step_result
+                    )
+                if not all_transition_conditions_are_valid:
+                    raise FailedWorkflowExecution(
+                        workflow_errors['failed_step_conditions'].format(
+                            transition['condition'],
+                            node_parent.identifier,
+                            step_to_execute['id']
+                        )
+                    )
+
             if action == "validate_account":
                 user_filter['pin'] = step_params['pin']
-                self.account_services.validate_account(user_filter=user_filter)
-                # TODO: Check transition conditions
-                continue
-
-            if action == "get_account_balance":
-                self.account_services.get_account_balance(
+                self.step_result = self.account_services.validate_account(
                     user_filter=user_filter
                 )
-                # TODO: Check transition conditions
-                continue
+
+            if action == "get_account_balance":
+                self.step_result = self.account_services.get_account_balance(
+                    user_filter=user_filter
+                )
 
             if action == "deposit_money":
                 user_filter = {'user_id': step_params['user_id']}
-                self.account_services.deposit_money(
+                self.step_result = self.account_services.deposit_money(
                     user_filter=user_filter,
                     amount_to_deposit=step_params['money']
                 )
-                # TODO: Check transition conditions
-                continue
 
             if action == "withdraw_in_dollars":
-                self.account_services.withdraw_in_dollars(
+                self.step_result = self.account_services.withdraw_in_dollars(
                     user_filter=user_filter,
                     amount_to_withdraw=step_params['money']
                 )
-                # TODO: Check transition conditions
-                continue
 
             if action == "withdraw_in_pesos":
-                self.account_services.withdraw_in_dollars(
+                self.step_result = self.account_services.withdraw_in_dollars(
                     user_filter=user_filter,
                     amount_to_withdraw=step_params['money']
                 )
-                # TODO: Check transition conditions
-                continue
 
     def get_step_params_values(
         self,
@@ -204,3 +222,24 @@ class WorkFlowServices:
              )
          )
         return all_conditions_are_valid
+
+    def found_transition_in_step(
+        self,
+        *,
+        step_id: str,
+        transition_id: str
+    ) -> Dict:
+        """
+            This method return the transition find by "target" in specific
+            'step'
+        """
+        filter_step = list(filter(
+            lambda step: step['id'] == step_id, self.steps
+        ))
+        step_found = filter_step[0]
+        filter_transition = list(filter(
+            lambda transition: transition['target'] == transition_id,
+            step_found['transitions']
+        ))
+        return filter_transition[0]
+

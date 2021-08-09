@@ -21,6 +21,7 @@ def print_action_decorator(function):
                 f'    Result = {value}\n'
                 f"{string_separator}\n"
             )
+            return value
         except Exception as error:
             print(
                 f"{string_separator}"

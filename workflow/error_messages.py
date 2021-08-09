@@ -12,6 +12,10 @@ workflow_errors = {
     ),
     "invalid_workflow_execution": (
         "One error happened during workflow execution"
+    ),
+    "failed_step_conditions": (
+        "The conditions **{0}** of parent node **'{1}'** "
+        "are not met to pass the node **'{2}'**"
     )
 }
 
