@@ -31,7 +31,7 @@ class FailedAccountDBUpdate(WorkflowExceptions):
     pass
 
 
-class FailedWorkflowExecution(WorkflowExceptions):
+class InvalidStepConditions(WorkflowExceptions):
     pass
 
 
@@ -56,5 +56,4 @@ class InvalidFileContent(APIException):
 
 
 class InvalidWorkflowExecution(APIException):
-    status_code = status.HTTP_400_BAD_REQUEST
-    default_detail = workflow_errors.get('invalid_workflow_execution')
+    pass

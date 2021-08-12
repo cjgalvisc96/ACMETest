@@ -1,4 +1,3 @@
-import logging
 from typing import Union, Dict, Optional
 from workflow.utils import utils as workflow_utils
 from workflow.exceptions import (
@@ -11,8 +10,6 @@ from workflow.constants import MINIMUM_BALANCE
 from workflow.error_messages import account_errors
 from workflow import account_selectors
 from workflow.decorators import print_action_decorator
-
-logger = logging.getLogger(__name__)
 
 
 class AccountServices:
@@ -27,18 +24,20 @@ class AccountServices:
             user_filter=user_filter
         )
         if not account_qry.exists():
-            msg = account_errors['user_not_exists'].format(user_filter['user_id'])
-            logger.exception(f"AccountServices::validate_account() -> {msg}")
+            msg = account_errors['user_not_exists'].format(
+                user_filter['user_id']
+            )
             raise UserNotExists(msg)
 
         account = account_qry.first()
-        is_valid_pin = True if account.user['pin'] == user_filter['pin'] else False
 
+        is_valid_pin = (
+            True if account.user['pin'] == user_filter['pin'] else False
+        )
         if not is_valid_pin:
             msg = account_errors['invalid_pin'].format(
                 user_filter['pin'], user_filter['user_id']
             )
-            logger.exception(f"AccountServices::validate_account() -> {msg}")
             raise InvalidUserPIN(msg)
 
         return True
@@ -88,7 +87,6 @@ class AccountServices:
             msg = account_errors['account_without_balance'].format(
                 amount_to_withdraw, currency
             )
-            logger.error(f"AccountServices::withdraw_in_pesos() -> {msg}")
             raise AccountWithoutBalance(msg)
 
         account.balance = new_balance
@@ -115,9 +113,6 @@ class AccountServices:
             msg = account_errors['account_without_balance'].format(
                 amount_to_withdraw, currency, amount_dollars_to_pesos
             )
-            logger.error(
-                f"AccountServices::withdraw_in_dollars() -> {msg}"
-            )
             raise AccountWithoutBalance(msg)
 
         account.balance = new_balance
@@ -136,9 +131,7 @@ class AccountServices:
                 )
             account.transactions += [transaction]
             account.save()
-        except FailedAccountDBUpdate as error:
-            logger.error(
-                f"AccountServices::create_transaction_in_account() -> {error}"
-            )
-            raise FailedAccountDBUpdate(account_errors['db_update'])
+        except FailedAccountDBUpdate:
+            msg = account_errors['db_update']
+            raise FailedAccountDBUpdate(msg)
         return None

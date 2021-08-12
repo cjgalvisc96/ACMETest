@@ -1,12 +1,13 @@
 import json
-import logging
 from typing import Optional, Union, Dict
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from workflow.constants import ALLOWED_FILE_EXTENSIONS
-from workflow.error_messages import workflow_errors
+from workflow.constants import (
+    ALLOWED_FILE_EXTENSIONS,
+    CONSOLE_RED_COLOR
+)
 from workflow.workflow_services import WorkFlowServices
 from workflow.serializers import WorkflowSerializer
 from workflow.success_messages import workflow_success_messages
@@ -19,8 +20,6 @@ from workflow.exceptions import (
 )
 from workflow.utils import utils as workflow_utils
 
-logger = logging.getLogger(__name__)
-
 
 class WorkflowJsonView(APIView):
     parser_classes = (MultiPartParser, )
@@ -28,6 +27,7 @@ class WorkflowJsonView(APIView):
     def post(self, request):
         file = request.data.get('file')
         self.check_file_existence(file=file)
+
         file_content = file.read().decode('utf-8')
         self.check_file_extension(file_name=file.name)
 
@@ -35,24 +35,27 @@ class WorkflowJsonView(APIView):
         self.check_file_structure(json_file=json_file)
 
         self.execute_workflow(json_file=json_file)
+
         return Response(
             {
-                "success": workflow_success_messages['success_workflow_execution']
+                "success": (
+                    workflow_success_messages['success_workflow_execution']
+                )
             },
             status=status.HTTP_200_OK
         )
 
-    @staticmethod
     def execute_workflow(
+        self,
         *,
         json_file: Dict
-    ) -> Optional[Response]:
+    ) -> Optional[InvalidWorkflowExecution]:
         try:
             workflow = WorkFlowServices(json_file=json_file)
             workflow.execute_workflow()
-        except Exception as error:
-            logger.exception(f"WorkflowJsonView::execute_workflow() -> {error}")
-            raise InvalidWorkflowExecution()
+        except Exception as workflow_execution_error:
+            self.print_error(error=workflow_execution_error)
+            raise InvalidWorkflowExecution(workflow_execution_error)
         return None
 
     @staticmethod
@@ -62,10 +65,7 @@ class WorkflowJsonView(APIView):
     ) -> Union[InvalidFileContent, Dict]:
         try:
             json_file = json.loads(file_content)
-        except json.decoder.JSONDecodeError as error:
-            logger.exception(
-                f"WorkflowJsonView::parse_file_content_to_json() -> {error}"
-            )
+        except json.decoder.JSONDecodeError:
             raise InvalidFileContent()
         return json_file
 
@@ -76,10 +76,6 @@ class WorkflowJsonView(APIView):
     ) -> Optional[InvalidFileStructure]:
         workflow_serializer = WorkflowSerializer(data=json_file)
         if not workflow_serializer.is_valid():
-            logger.error(
-                f"WorkflowJsonView::check_file_structure() -> "
-                f"-> {workflow_serializer.errors}"
-            )
             raise InvalidFileStructure()
         return None
 
@@ -90,10 +86,6 @@ class WorkflowJsonView(APIView):
     ) -> Optional[InvalidFileExtension]:
         file_extension = workflow_utils.get_file_extension(file_name=file_name)
         if file_extension not in ALLOWED_FILE_EXTENSIONS:
-            logger.error(
-                f"WorkflowJsonView::check_file_extension() -> "
-                f"{workflow_errors.get('invalid_file_extension')}"
-            )
             raise InvalidFileExtension()
         return None
 
@@ -103,9 +95,19 @@ class WorkflowJsonView(APIView):
         file: MultiPartParser
     ) -> Optional[FileNotExist]:
         if not file:
-            logger.error(
-                f"WorkflowJsonView::check_file_existence() -> "
-                f"{workflow_errors.get('required_json_file')}"
-            )
             raise FileNotExist()
         return None
+
+    @staticmethod
+    def print_error(
+        *,
+        error
+    ) -> None:
+        string_separator = f"{'*' * 30}\n"
+        print(
+            f"{string_separator}"
+            f"{CONSOLE_RED_COLOR}"
+            f'[ERROR] = {error}\n'
+            f"{CONSOLE_RED_COLOR}"
+            f"{string_separator}\n"
+        )

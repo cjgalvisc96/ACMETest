@@ -1,11 +1,9 @@
-import logging
 import requests
 from typing import Union
 from datetime import datetime
 from workflow.constants import TRM_SERVICE_URL
 from workflow.exceptions import FailedTRMService
-
-logger = logging.getLogger(__name__)
+from workflow.error_messages import external_services_errors
 
 
 def get_current_trm() -> Union[float, FailedTRMService]:
@@ -16,10 +14,13 @@ def get_current_trm() -> Union[float, FailedTRMService]:
             TRM_SERVICE_URL.format(year, month, day)
         )
         trm_service_response = trm_service_request.json()
-        trm = trm_service_response['data']['value']
-        return trm
-    except FailedTRMService as error:
-        logging.error(f"get_current_trm() -> {error}")
+        current_trm = trm_service_response['data']['value']
+        return current_trm
+    except FailedTRMService as trm_service_error:
+        msg = external_services_errors['trm_service_failed'].format(
+            trm_service_error
+        )
+        raise FailedTRMService(msg)
 
 
 def get_file_extension(

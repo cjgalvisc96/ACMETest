@@ -1,9 +1,8 @@
-import logging
 from treelib import Tree
 from typing import Dict, List, Union
 from workflow.exceptions import (
     FailedWorkflowDBCreation,
-    FailedWorkflowExecution
+    InvalidStepConditions
 )
 from workflow.models import Workflow
 from workflow.error_messages import workflow_errors
@@ -13,8 +12,6 @@ from workflow.constants import (
     CONSOLE_YELLOW_COLOR
 )
 
-logger = logging.getLogger(__name__)
-
 
 class WorkFlowServices:
     def __init__(self, json_file):
@@ -23,7 +20,13 @@ class WorkFlowServices:
         self.trigger = self.json_file['trigger']
         self.workflow_id = self.create_workflow_in_db()
         self.account_services = AccountServices()
-        self.step_result = ''
+        self.actions_results = {
+            "validate_account": False,
+            "account_balance": 0.0,
+            "deposit_money": 0.0,
+            "withdraw_in_dollars": 0.0,
+            "withdraw_in_pesos": 0.0
+        }
 
     def create_workflow_in_db(
         self
@@ -33,14 +36,14 @@ class WorkFlowServices:
                 steps=self.json_file['steps'],
                 trigger=self.json_file['trigger']
             )
-        except FailedWorkflowDBCreation as error:
-            logger.error(
-                f"WorkFlowServices::create_workflow_in_db() -> {error}"
-            )
-            raise FailedWorkflowDBCreation(workflow_errors['db_creation'])
+        except FailedWorkflowDBCreation:
+            msg = workflow_errors['db_creation']
+            raise FailedWorkflowDBCreation(msg)
         return str(workflow._id)
 
-    def execute_workflow(self) -> None:
+    def execute_workflow(
+        self
+    ) -> None:
         execution_workflow_tree = self.create_execution_workflow_tree()
         print(f"{CONSOLE_YELLOW_COLOR}EXECUTION WORKFLOW TREE")
         execution_workflow_tree.show(line_type='ascii-em')  # Print Tree
@@ -63,46 +66,53 @@ class WorkFlowServices:
                 )
                 all_transition_conditions_are_valid = self. \
                     check_if_all_transition_conditions_are_valid(
-                        conditions=transition['condition'],
-                        result=self.step_result
+                        conditions=transition['condition']
                     )
                 if not all_transition_conditions_are_valid:
-                    raise FailedWorkflowExecution(
-                        workflow_errors['failed_step_conditions'].format(
-                            transition['condition'],
-                            node_parent.identifier,
-                            step_to_execute['id']
-                        )
+                    msg = workflow_errors['invalid_step_conditions'].format(
+                        transition['condition'],
+                        node_parent.identifier,
+                        step_to_execute['id']
                     )
+                    raise InvalidStepConditions(msg)
 
             if action == "validate_account":
                 user_filter['pin'] = step_params['pin']
-                self.step_result = self.account_services.validate_account(
-                    user_filter=user_filter
+                self.actions_results["validate_account"] = (
+                    self.account_services.validate_account(
+                        user_filter=user_filter
+                    )
                 )
 
             if action == "get_account_balance":
-                self.step_result = self.account_services.get_account_balance(
-                    user_filter=user_filter
+                self.actions_results["account_balance"] = (
+                    self.account_services.get_account_balance(
+                        user_filter=user_filter
+                    )
                 )
 
             if action == "deposit_money":
-                user_filter = {'user_id': step_params['user_id']}
-                self.step_result = self.account_services.deposit_money(
-                    user_filter=user_filter,
-                    amount_to_deposit=step_params['money']
+                self.actions_results["deposit_money"] = (
+                    self.account_services.deposit_money(
+                        user_filter=user_filter,
+                        amount_to_deposit=step_params['money']
+                    )
                 )
 
             if action == "withdraw_in_dollars":
-                self.step_result = self.account_services.withdraw_in_dollars(
-                    user_filter=user_filter,
-                    amount_to_withdraw=step_params['money']
+                self.actions_results["withdraw_in_dollars"] = (
+                    self.account_services.withdraw_in_dollars(
+                        user_filter=user_filter,
+                        amount_to_withdraw=step_params['money']
+                    )
                 )
 
             if action == "withdraw_in_pesos":
-                self.step_result = self.account_services.withdraw_in_dollars(
-                    user_filter=user_filter,
-                    amount_to_withdraw=step_params['money']
+                self.actions_results["withdraw_in_pesos"] = (
+                    self.account_services.withdraw_in_pesos(
+                        user_filter=user_filter,
+                        amount_to_withdraw=step_params['money']
+                    )
                 )
 
     def get_step_params_values(
@@ -198,14 +208,14 @@ class WorkFlowServices:
                     step_transitions=target_transitions['transitions']
                 )
 
-    @staticmethod
     def check_if_all_transition_conditions_are_valid(
+        self,
         *,
-        conditions: List[Dict],
-        result: Union[bool, float]
+        conditions: List[Dict]
     ) -> bool:
         conditions_results = []
         for condition in conditions:
+            result = self.actions_results[condition['from_id']]
             check_condition = (
                 eval(
                     f"{result} "
@@ -242,4 +252,3 @@ class WorkFlowServices:
             step_found['transitions']
         ))
         return filter_transition[0]
-

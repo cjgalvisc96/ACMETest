@@ -10,12 +10,9 @@ workflow_errors = {
     "db_creation": (
         "An error occurred while trying to create the Workflow in the db "
     ),
-    "invalid_workflow_execution": (
-        "One error happened during workflow execution"
-    ),
-    "failed_step_conditions": (
-        "The conditions **{0}** of parent node **'{1}'** "
-        "are not met to pass the node **'{2}'**"
+    "invalid_step_conditions": (
+        "The conditions {0} of parent node '{1}' "
+        "are not met to pass the node '{2}'\n"
     )
 }
 
@@ -27,4 +24,8 @@ account_errors = {
         "account this don't will have balance"
     ),
     "db_update": "Account can't update in DB"
+}
+
+external_services_errors = {
+    "trm_service_failed": "The TRM external service failed: {0}"
 }
