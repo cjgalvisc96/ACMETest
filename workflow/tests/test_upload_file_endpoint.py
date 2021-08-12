@@ -21,7 +21,7 @@ class UploadFileEndpointTest(TestCase):
         client = APIClient()
         response = client.post(
             UPLOAD_FILE_ENDPOINT,
-            {'file': ''},
+            dict(file=''),
             format='multipart'
         )
         result = json.loads(response.content)
@@ -41,7 +41,7 @@ class UploadFileEndpointTest(TestCase):
         with open(f'{FIXTURES_PATH}{workflow_file_name}', 'rb') as txt_file:
             response = client.post(
                 UPLOAD_FILE_ENDPOINT,
-                {'file': txt_file},
+                dict(file=txt_file),
                 format='multipart'
             )
             result = json.loads(response.content)
@@ -61,7 +61,7 @@ class UploadFileEndpointTest(TestCase):
         with open(f'{FIXTURES_PATH}{workflow_file_name}', 'rb') as json_file:
             response = client.post(
                 UPLOAD_FILE_ENDPOINT,
-                {'file': json_file},
+                dict(file=json_file),
                 format='multipart'
             )
             result = json.loads(response.content)
@@ -81,7 +81,7 @@ class UploadFileEndpointTest(TestCase):
         with open(f'{FIXTURES_PATH}{workflow_file_name}', 'rb') as json_file:
             response = client.post(
                 UPLOAD_FILE_ENDPOINT,
-                {'file': json_file},
+                dict(file=json_file),
                 format='multipart'
             )
             result = json.loads(response.content)

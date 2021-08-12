@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Union, Dict, Optional
 from workflow.utils import utils as workflow_utils
 from workflow.exceptions import (
@@ -13,10 +14,12 @@ from workflow.decorators import print_action_decorator
 
 
 class AccountServices:
+    def __init__(self, workflow_id):
+        self.workflow_id = workflow_id
 
-    @staticmethod
     @print_action_decorator
     def validate_account(
+        self,
         *,
         user_filter: Dict
     ) -> Union[bool, UserNotExists, InvalidUserPIN]:
@@ -40,11 +43,20 @@ class AccountServices:
             )
             raise InvalidUserPIN(msg)
 
+        transaction = dict(
+            action='validate_account',
+            old_balance=account.balance,
+            balance_after_transaction=account.balance
+        )
+        self.create_transaction_in_account(
+            user_filter=user_filter,
+            transaction=transaction
+        )
         return True
 
-    @staticmethod
     @print_action_decorator
     def get_account_balance(
+        self,
         *,
         user_filter: Dict
     ) -> Union[float, AccountWithoutBalance]:
@@ -52,11 +64,21 @@ class AccountServices:
             user_filter=user_filter
         )
         account = account_qry.first()
+
+        transaction = dict(
+            action='get_account_balance',
+            old_balance=account.balance,
+            balance_after_transaction=account.balance
+        )
+        self.create_transaction_in_account(
+            user_filter=user_filter,
+            transaction=transaction
+        )
         return account.balance
 
-    @staticmethod
     @print_action_decorator
     def deposit_money(
+        self,
         *,
         user_filter: Dict,
         amount_to_deposit: float
@@ -65,13 +87,24 @@ class AccountServices:
             user_filter=user_filter
         )
         account = account_qry.first()
-        account.balance += amount_to_deposit
+        current_balance = account.balance
+        account.balance = current_balance + amount_to_deposit
         account.save()
+
+        transaction = dict(
+            action='deposit_money',
+            old_balance=current_balance,
+            balance_after_transaction=account.balance
+        )
+        self.create_transaction_in_account(
+            user_filter=user_filter,
+            transaction=transaction
+        )
         return account.balance
 
-    @staticmethod
     @print_action_decorator
     def withdraw_in_pesos(
+        self,
         *,
         user_filter: Dict,
         amount_to_withdraw: float
@@ -91,11 +124,21 @@ class AccountServices:
 
         account.balance = new_balance
         account.save()
+
+        transaction = dict(
+            action='withdraw_in_pesos',
+            old_balance=current_balance,
+            balance_after_transaction=account.balance
+        )
+        self.create_transaction_in_account(
+            user_filter=user_filter,
+            transaction=transaction
+        )
         return account.balance
 
-    @staticmethod
     @print_action_decorator
     def withdraw_in_dollars(
+        self,
         *,
         user_filter: Dict,
         amount_to_withdraw: float
@@ -117,18 +160,32 @@ class AccountServices:
 
         account.balance = new_balance
         account.save()
+
+        transaction = dict(
+            action='withdraw_in_dollars',
+            old_balance=current_balance,
+            balance_after_transaction=account.balance
+        )
+        self.create_transaction_in_account(
+            user_filter=user_filter,
+            transaction=transaction
+        )
         return account.balance
 
-    @staticmethod
     def create_transaction_in_account(
+        self,
         *,
         user_filter: Dict,
-        transaction: Dict,
+        transaction: Dict
     ) -> Optional[FailedAccountDBUpdate]:
+        current_datetime = datetime.now()
+        transaction['workflow_id'] = self.workflow_id
+        transaction['date'] = current_datetime.strftime("%d/%m/%Y %H:%M:%S")
         try:
-            account = account_selectors.filter_account_by_user(
+            account_qry = account_selectors.filter_account_by_user(
                     user_filter=user_filter
                 )
+            account = account_qry.first()
             account.transactions += [transaction]
             account.save()
         except FailedAccountDBUpdate:

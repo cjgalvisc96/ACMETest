@@ -10,7 +10,6 @@ from workflow.constants import (
 )
 from workflow.workflow_services import WorkFlowServices
 from workflow.serializers import WorkflowSerializer
-from workflow.success_messages import workflow_success_messages
 from workflow.exceptions import (
     FileNotExist,
     InvalidFileExtension,
@@ -34,29 +33,22 @@ class WorkflowJsonView(APIView):
         json_file = self.parse_file_content_to_json(file_content=file_content)
         self.check_file_structure(json_file=json_file)
 
-        self.execute_workflow(json_file=json_file)
+        account_with_transactions = self.execute_workflow(json_file=json_file)
 
-        return Response(
-            {
-                "success": (
-                    workflow_success_messages['success_workflow_execution']
-                )
-            },
-            status=status.HTTP_200_OK
-        )
+        return Response(account_with_transactions, status=status.HTTP_200_OK)
 
     def execute_workflow(
         self,
         *,
         json_file: Dict
-    ) -> Optional[InvalidWorkflowExecution]:
+    ) -> Union[Dict, InvalidWorkflowExecution]:
         try:
             workflow = WorkFlowServices(json_file=json_file)
-            workflow.execute_workflow()
+            account_with_transactions = workflow.execute_workflow()
         except Exception as workflow_execution_error:
             self.print_error(error=workflow_execution_error)
             raise InvalidWorkflowExecution(workflow_execution_error)
-        return None
+        return account_with_transactions
 
     @staticmethod
     def parse_file_content_to_json(

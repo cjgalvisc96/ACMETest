@@ -1,12 +1,14 @@
 from treelib import Tree
 from typing import Dict, List, Union
 from workflow.exceptions import (
+    WorkflowExceptions,
     FailedWorkflowDBCreation,
     InvalidStepConditions
 )
 from workflow.models import Workflow
 from workflow.error_messages import workflow_errors
 from workflow.account_services import AccountServices
+from workflow import account_selectors
 from workflow.constants import (
     OPERATORS_CONVERSIONS,
     CONSOLE_YELLOW_COLOR
@@ -19,14 +21,16 @@ class WorkFlowServices:
         self.steps = self.json_file['steps']
         self.trigger = self.json_file['trigger']
         self.workflow_id = self.create_workflow_in_db()
-        self.account_services = AccountServices()
-        self.actions_results = {
-            "validate_account": False,
-            "account_balance": 0.0,
-            "deposit_money": 0.0,
-            "withdraw_in_dollars": 0.0,
-            "withdraw_in_pesos": 0.0
-        }
+        self.account_services = AccountServices(
+            workflow_id=self.workflow_id
+        )
+        self.actions_results = dict(
+            validate_account=False,
+            account_balance=0.0,
+            deposit_money=0.0,
+            withdraw_in_dollars=0.0,
+            withdraw_in_pesos=0.0
+        )
 
     def create_workflow_in_db(
         self
@@ -43,7 +47,7 @@ class WorkFlowServices:
 
     def execute_workflow(
         self
-    ) -> None:
+    ) -> Union[WorkflowExceptions, Dict]:
         execution_workflow_tree = self.create_execution_workflow_tree()
         print(f"{CONSOLE_YELLOW_COLOR}EXECUTION WORKFLOW TREE")
         execution_workflow_tree.show(line_type='ascii-em')  # Print Tree
@@ -114,6 +118,17 @@ class WorkFlowServices:
                         amount_to_withdraw=step_params['money']
                     )
                 )
+
+        account_qry = account_selectors.filter_account_by_user(
+            user_filter=self.trigger['params']
+        )
+        account = account_qry.first()
+        account_with_transactions = dict(
+            balance=account.balance,
+            user=account.user,
+            transactions=account.transactions
+        )
+        return account_with_transactions
 
     def get_step_params_values(
         self,
@@ -213,7 +228,7 @@ class WorkFlowServices:
         *,
         conditions: List[Dict]
     ) -> bool:
-        conditions_results = []
+        conditions_results = list()
         for condition in conditions:
             result = self.actions_results[condition['from_id']]
             check_condition = (
