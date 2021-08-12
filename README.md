@@ -29,7 +29,6 @@ To solve the problem the data structure "General tree" was used
    ```json
     {
         "balance" : 90000.0,
-        "workflows_ids" : [],
         "transactions" : [],
         "user" : {
             "user_id" : "105398891",
